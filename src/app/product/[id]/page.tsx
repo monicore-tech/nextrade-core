@@ -9,7 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCart } from "@/contexts/cart-context";
+import { useSession } from "next-auth/react";
 import { toast } from "sonner";
+import { ProductReviews } from "@/components/product-reviews";
 import type { Product } from "@/lib/dummyApi";
 
 export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
@@ -18,6 +20,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   const [loading, setLoading] = useState(true);
   const [imgIndex, setImgIndex] = useState(0);
   const { addItem } = useCart();
+  const { data: session } = useSession();
 
   useEffect(() => {
     fetch(`https://dummyjson.com/products/${id}`)
@@ -167,6 +170,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           )}
         </div>
       </div>
+      <ProductReviews productId={product.id} isLoggedIn={!!session} />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { pgTable, text, integer, jsonb, timestamp, serial } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, jsonb, timestamp, serial, unique } from "drizzle-orm/pg-core";
 
 export type CartItem = { productId: number; quantity: number };
 export type OrderItem = { productId: number; quantity: number; priceCents: number };
@@ -19,6 +19,19 @@ export const carts = pgTable("carts", {
   items: jsonb("items").$type<CartItem[]>().notNull().default([]),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
+
+export const reviews = pgTable(
+  "reviews",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    productId: integer("product_id").notNull(),
+    rating: integer("rating").notNull(),
+    body: text("body").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [unique().on(t.userId, t.productId)]
+);
 
 export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ShoppingCart, Search, User, LogOut, LayoutDashboard, Menu } from "lucide-react";
+import { ShoppingCart, Search, User, LogOut, LayoutDashboard, Menu, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +16,8 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useCart } from "@/contexts/cart-context";
 import { signOut } from "next-auth/react";
-import { useState, type FormEvent } from "react";
+import { useTheme } from "next-themes";
+import { useState, useEffect, useCallback, type FormEvent } from "react";
 import type { Session } from "next-auth";
 
 type Category = { slug: string; name: string };
@@ -30,27 +31,49 @@ export function Navbar({ categories, session }: NavbarProps) {
   const { totalItems } = useCart();
   const router = useRouter();
   const pathname = usePathname();
+  const { theme, setTheme } = useTheme();
   const [query, setQuery] = useState("");
+  const [mounted, setMounted] = useState(false);
 
-  function handleSearch(e: FormEvent) {
+  useEffect(() => setMounted(true), []);
+
+  const debouncedSearch = useCallback(
+    (() => {
+      let timer: ReturnType<typeof setTimeout>;
+      return (value: string) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          if (value.trim()) router.push(`/search?q=${encodeURIComponent(value.trim())}`);
+        }, 400);
+      };
+    })(),
+    [router]
+  );
+
+  function handleSearchChange(value: string) {
+    setQuery(value);
+    debouncedSearch(value);
+  }
+
+  function handleSearchSubmit(e: FormEvent) {
     e.preventDefault();
     if (query.trim()) router.push(`/search?q=${encodeURIComponent(query.trim())}`);
   }
 
   return (
-    <header className="sticky top-0 z-50 bg-background border-b">
-      <div className="max-w-7xl mx-auto px-4 flex items-center gap-4 h-16">
-        <Link href="/" className="font-bold text-xl tracking-tight shrink-0">
+    <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/60">
+      <div className="max-w-7xl mx-auto px-4 flex items-center gap-3 h-16">
+        <Link href="/" className="font-heading font-bold text-xl tracking-tight shrink-0">
           NexTrade
         </Link>
 
         {/* Desktop category nav */}
-        <nav className="hidden md:flex gap-1 flex-wrap">
-          {categories.slice(0, 6).map((cat) => (
+        <nav className="hidden md:flex gap-1">
+          {categories.slice(0, 5).map((cat) => (
             <Link
               key={cat.slug}
               href={`/category/${cat.slug}`}
-              className={`text-sm px-2 py-1 rounded hover:bg-muted transition-colors ${
+              className={`text-sm px-2.5 py-1.5 rounded-md hover:bg-muted transition-colors ${
                 pathname === `/category/${cat.slug}` ? "bg-muted font-medium" : "text-muted-foreground"
               }`}
             >
@@ -61,22 +84,43 @@ export function Navbar({ categories, session }: NavbarProps) {
 
         <div className="flex-1" />
 
-        {/* Search */}
-        <form onSubmit={handleSearch} className="hidden sm:flex items-center gap-2 w-48 lg:w-64">
+        {/* Debounced search */}
+        <form onSubmit={handleSearchSubmit} className="hidden sm:flex items-center w-44 lg:w-60">
           <div className="relative w-full">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search products…"
-              className="pl-8 h-9"
+              onChange={(e) => handleSearchChange(e.target.value)}
+              placeholder="Search…"
+              className="pl-8 h-9 bg-muted/50 border-transparent focus:border-border"
             />
+            {query && (
+              <button
+                type="button"
+                onClick={() => setQuery("")}
+                className="absolute right-2 top-2 text-muted-foreground hover:text-foreground text-xs"
+              >
+                ✕
+              </button>
+            )}
           </div>
         </form>
 
+        {/* Dark mode toggle */}
+        {mounted && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="shrink-0"
+          >
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
+        )}
+
         {/* Cart */}
         <Link href="/cart">
-          <Button variant="ghost" size="icon" className="relative">
+          <Button variant="ghost" size="icon" className="relative shrink-0">
             <ShoppingCart className="h-5 w-5" />
             {totalItems > 0 && (
               <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
@@ -92,8 +136,9 @@ export function Navbar({ categories, session }: NavbarProps) {
             <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-md h-9 w-9 hover:bg-muted transition-colors">
               <User className="h-5 w-5" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <div className="px-2 py-1.5 text-sm font-medium">{session.user.name}</div>
+            <DropdownMenuContent align="end" className="w-48">
+              <div className="px-2 py-1.5 text-sm font-medium truncate">{session.user.name}</div>
+              <div className="px-2 pb-1.5 text-xs text-muted-foreground truncate">{session.user.email}</div>
               <DropdownMenuSeparator />
               <DropdownMenuItem>
                 <Link href="/orders" className="flex w-full">My Orders</Link>
@@ -118,7 +163,7 @@ export function Navbar({ categories, session }: NavbarProps) {
           </DropdownMenu>
         ) : (
           <Link href="/auth/login">
-            <Button variant="ghost" size="sm">Sign in</Button>
+            <Button variant="ghost" size="sm" className="shrink-0">Sign in</Button>
           </Link>
         )}
 
@@ -128,12 +173,24 @@ export function Navbar({ categories, session }: NavbarProps) {
             <Menu className="h-5 w-5" />
           </SheetTrigger>
           <SheetContent side="left">
-            <nav className="flex flex-col gap-1 mt-4">
+            <p className="font-heading font-bold text-lg mb-4">NexTrade</p>
+            <form onSubmit={handleSearchSubmit} className="mb-4">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={query}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  placeholder="Search products…"
+                  className="pl-8"
+                />
+              </div>
+            </form>
+            <nav className="flex flex-col gap-1">
               {categories.map((cat) => (
                 <Link
                   key={cat.slug}
                   href={`/category/${cat.slug}`}
-                  className="py-2 px-3 rounded hover:bg-muted text-sm"
+                  className="py-2 px-3 rounded-md hover:bg-muted text-sm"
                 >
                   {cat.name}
                 </Link>
