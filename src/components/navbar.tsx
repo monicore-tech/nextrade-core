@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { NexTradeLogo } from "@/components/brand/logo";
 import { ShoppingCart, Search, User, LogOut, LayoutDashboard, Menu, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,8 +64,8 @@ export function Navbar({ categories, session }: NavbarProps) {
   return (
     <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/60">
       <div className="max-w-7xl mx-auto px-4 flex items-center gap-3 h-16">
-        <Link href="/" className="font-heading font-bold text-xl tracking-tight shrink-0">
-          NexTrade
+        <Link href="/" className="shrink-0">
+          <NexTradeLogo className="h-8 w-auto" variant="auto" />
         </Link>
 
         {/* Desktop category nav */}
@@ -173,7 +174,7 @@ export function Navbar({ categories, session }: NavbarProps) {
             <Menu className="h-5 w-5" />
           </SheetTrigger>
           <SheetContent side="left">
-            <p className="font-heading font-bold text-lg mb-4">NexTrade</p>
+            <NexTradeLogo className="h-8 w-auto mb-4" variant="auto" />
             <form onSubmit={handleSearchSubmit} className="mb-4">
               <div className="relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />

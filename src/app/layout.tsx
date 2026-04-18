@@ -5,6 +5,7 @@ import { Navbar } from "@/components/navbar";
 import { CartProvider } from "@/contexts/cart-context";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
+import { NexTradeLogo } from "@/components/brand/logo";
 import { SessionProvider } from "@/components/session-provider";
 import { getCategories } from "@/lib/dummyApi";
 import { auth } from "@/auth";
@@ -29,7 +30,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <Navbar categories={categories} session={session} />
             <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-8">{children}</main>
             <footer className="border-t py-8 text-center text-sm text-muted-foreground">
-              <p className="font-semibold text-foreground mb-1">NexTrade Core</p>
+              <div className="flex justify-center mb-2">
+                <NexTradeLogo className="h-7 w-auto opacity-80" variant="auto" />
+              </div>
               <p>© {new Date().getFullYear()} All rights reserved.</p>
             </footer>
           </CartProvider>
